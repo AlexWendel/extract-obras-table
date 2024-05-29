@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/2.0.7/css/dataTables.dataTables.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/v/bs5/jq-3.7.0/jszip-3.10.1/dt-2.0.7/b-3.0.2/b-html5-3.0.2/r-3.0.2/rg-1.5.0/sb-1.7.1/sp-2.3.1/datatables.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+    <script src="https://cdn.datatables.net/v/bs5/jq-3.7.0/jszip-3.10.1/dt-2.0.7/b-3.0.2/b-html5-3.0.2/r-3.0.2/rg-1.5.0/sb-1.7.1/sp-2.3.1/datatables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/handlebars@latest/dist/handlebars.js"></script>
+</head>
+<body>   
+      
+    <table id="myTable" class="display responsive dtr-inline collapsed" style="width:70vw">
+        <thead>
+            <tr>
+                <th class="bigdesktop meddesktop smalldesktop medium">Modalidade</th>
+                <th class="bigdesktop meddesktop smalldesktop medium">Objeto</th>
+                <th class="bigdesktop meddesktop smalldesktop medium">Contrato</th>
+                <th class="bigdesktop meddesktop smalldesktop medium">Secretaria</th>
+                <th class="bigdesktop meddesktop smalldesktop medium">Situação</th>
+                <th class="bigdesktop meddesktop smalldesktop medium">Contratada</th>
+                <th class="bigdesktop meddesktop smalldesktop medium">Ordem de Serviço</th>
+                <th class="bigdesktop meddesktop smalldesktop medium">Valor</th>
+                <th class="hideous">Mais informações:</th>
+            </tr>
+        </thead>
+        <tbody>
+            
+        </tbody>
+    </table>
+
+ 
+    <script async>
+        let csrftoken = '{{ csrf_token }}';
+
+
+        function gerarRows(data, renderer){
+            return `<tr>${renderer(data)}</tr>`;
+        }
+
+        function gerarT(data){            
+            return data.map((item) => {                
+                item = (typeof item == "string" && item.startsWith("R$")) ? formatCurrency(item): item
+                return `<td style="text-align:right">${item}</td>`;
+            }).join("");
+        }
+
+        function gerarOutraTabela(percentual){
+            let a = percentual[8].map((data) => Object.keys(data).map((medicao)=>{
+                let values = data[medicao];
+                return `<tr><td style="text-align:center">${medicao}</td>${gerarT(values)}</tr>`;
+            })).join("");
+            
+            let template = `<table class="table table-striped">
+                <tr>
+                    <th></th>
+                    <th colspan="3" style="border-right:2px solid #ccc;border-left:2px solid #ccc">PERCENTUAL CONTRATUAL</th>
+                    <th colspan="3" style="border-left:2px solid #ccc">CONTROLE DE MEDIÇÕES</th>
+                </tr>                
+                <tbody>
+                    <tr>
+                        <th>Período</th> 
+                        <th>Medição</th>
+                        <th>A medir</th>
+                        <th>Total</th>
+                        <th>Valor</th>
+                        <th>Saldo</th>
+                    </tr>
+                    ${a} 
+                </tbody> 
+            </table>`;
+            return template;
+        }
+
+        function formatCurrency(amount, currency="R$") {
+            if (typeof amount == "string" && amount.startsWith(currency)){
+                amount = amount.substr(currency.length);
+            }
+            amount = parseFloat(amount.toString());
+            return currency + amount.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');            
+        }
+
+        let table = new DataTable('#myTable', {
+            initComplete: function () {
+                let tr = document.createElement("tr");
+
+                this.api().columns().every(function () {
+                    let column = this;
+                    let title = column.header().textContent;
+
+                    let td = document.createElement("td");
+
+                    if (title == "Situação" || title == "Secretaria"){
+                        // Create select element
+                        let wrapper = document.createElement('div')
+                        let select = document.createElement('select');
+                        wrapper.appendChild(select)
+                        wrapper.className = "select"
+                        select.add(new Option(''));
+                        td.appendChild(wrapper);
+        
+                        // Apply listener for user change in value
+                        select.addEventListener('change', function () {
+                            column.search(select.value, {exact: true}).draw();
+                        });
+        
+                        // Add list of options
+                        column.data().unique().sort().each(function (d, j) {
+                            select.add(new Option(d));
+                        });             
+                    }
+                    else if (title == "Mais informações:"){
+
+                    }
+                    else{
+                        // Create input element
+                        let input = document.createElement('input');
+                        input.className = "input"
+                        input.placeholder = title;
+                        td.appendChild(input);
+                        // Event listener for user input
+                        input.addEventListener('keyup', () => {
+                            if (column.search() !== this.value) {
+                                column.search(input.value).draw();
+                            }
+                        });
+                    }
+                    
+                    tr.append(td);
+    
+                });
+                this.api().table().header().appendChild(tr);
+
+                
+            },            
+            ajax: {
+                url: 'https://gist.githubusercontent.com/Larvin-Vinicius/d904725a65f3fc8dba3bd42ed359cfb1/raw/2ed30f7eb70e028a8718237553cd8aa123a54317',
+                dataSrc: 'data'
+            },
+            dom: 'Bfrtip',
+            lengthMenu: [
+                [10, 25, 50, -1],
+                [10, 25, 50, 'Todos']
+            ],
+            buttons: [
+                'pageLength',
+                'colvis',
+                {extend: 'copyHtml5'},
+                {extend: 'excelHtml5'},
+                {extend: 'csvHtml5'},            
+            ],              
+            autoWidth: true,
+            paging: true,
+            responsive: {
+                details: {
+                    type: "column",
+                    target: 'td.control.dtr-control'
+                },
+                breakpoints: [
+                    {name: 'bigdesktop', width: Infinity},
+                    {name: 'meddesktop', width: 1480},
+                    {name: 'smalldesktop', width: 1280},
+                    {name: 'medium', width: 1188},
+                    {name: 'tabletl', width: 1024},
+                    {name: 'btwtabllandp', width: 848},
+                    {name: 'tabletp', width: 768},
+                    {name: 'mobilel', width: 480},
+                    {name: 'mobilep', width: 320},
+                    {name: 'hideous', width: 2}
+                ]
+            },                        
+            columnDefs: [
+            {},
+            {
+                width: '60%',
+                targets: [7,6]
+            },                
+            {
+                width: '50%',
+                targets: [1]
+            },   
+            {
+                width: '30%',
+                targets: [0]
+            },
+            {
+                width: '10%',
+                targets: [3,4]
+            },            
+            {    
+                render: (data, type, row) => {
+                    return gerarOutraTabela(row);
+                },
+                targets: 8 
+            },
+            {
+                targets: 7,
+                render: (data, type, row) => {
+                    if (type === 'display' || type === 'filter') {
+                        return formatCurrency(data);
+                    }
+                    return data;
+                }
+            },            
+            {
+                className: 'control dtr-control',
+                orderable: true,
+                targets:   0
+            }                       
+            ],
+            language: {
+                url: 'https://cdn.datatables.net/plug-ins/1.11.5/i18n/pt-BR.json'
+            }                            
+        });
+    
+    </script>    
+</body>
+</html>
