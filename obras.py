@@ -30,30 +30,18 @@ def extrair_medicao(row):
 
     return {periodo: [contrato_medicao, saldo_a_medir, total_medido, valor, saldo]}
 
-current_obra = None
+
+
+columns_names = df.columns
 for index, row in df.iterrows():
-    head_col = str(row.iloc[0])
-    if head_col.lower() == "obras em andamento" or head_col.lower() == "objeto contratual" or head_col.lower() == "modalidade":
-        continue
+    obra_code = row.iloc[0]
     
-    if not pd.isna(row.iloc[0]):
-        current_obra = head_col
-        last_valid_porcentagem = None
-        
-        data[current_obra] = {
-            "Objeto": row.iloc[1], 
-            "Contrato": row.iloc[2],
-            "Secretaria": row.iloc[3],
-            "Situação": row.iloc[4],
-            "Contratada": row.iloc[5],
-            "Ordem de Serviço": row.iloc[6].strftime("%d/%m/%Y") if not pd.isna(row.iloc[6]) else "-",
-            "Valor do Contrato": f"R${row.iloc[7]:.2f}",
-            "Medições": []
-        }
-        
-    if current_obra:
-        medicao = extrair_medicao(row)
-        data[current_obra]["Medições"].append(medicao)
+    for i, v in enumerate(row): # Index, Obra
+        k = columns_names[i] # Column name 
+        if k == "Medições":
+            medicoes_data = json.loads(v)
+        data[obra_code] = {}
+
 
 with open("obrinhas.json", "r+", encoding="utf-8") as f:
     f.write(json.dumps(data))
