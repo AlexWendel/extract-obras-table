@@ -30,19 +30,26 @@ def extrair_medicao(row):
 
     return {periodo: [contrato_medicao, saldo_a_medir, total_medido, valor, saldo]}
 
-
-
 columns_names = df.columns
 for index, row in df.iterrows():
     obra_code = row.iloc[0]
+    obra_medicoes = {}
+    obra_data = {}
     
-    for i, v in enumerate(row): # Index, Obra
+    for i, v in enumerate(row): # Index, Column data
         k = columns_names[i] # Column name 
-        if k == "Medições":
-            medicoes_data = json.loads(v)
-        data[obra_code] = {}
 
+        if k == "Medições":
+            medicoes_data = json.loads(v.replace("'", '"'))
+            for periodo, medicao in medicoes_data.items():
+                obra_medicoes[periodo] = medicao
+        else:
+            if type(v) == pd.Timestamp:
+                v = v.to_pydatetime().strftime("%d/%m/%Y")
+
+            obra_data[k] = v
+        data[obra_code] = obra_data
+    data[obra_code]["Medições"] = obra_medicoes
 
 with open("obrinhas.json", "r+", encoding="utf-8") as f:
-    f.write(json.dumps(data))
-    
+    f.write(json.dumps(data))   
