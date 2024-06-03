@@ -6,27 +6,45 @@
     <title>Document</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.datatables.net/2.0.7/css/dataTables.dataTables.css" rel="stylesheet">
-    <link href="https://cdn.datatables.net/v/bs5/jq-3.7.0/jszip-3.10.1/dt-2.0.7/b-3.0.2/b-html5-3.0.2/r-3.0.2/rg-1.5.0/sb-1.7.1/sp-2.3.1/datatables.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/v/bs5/jq-3.7.0/jszip-3.10.1/dt-2.0.7/b-3.0.2/b-html5-3.0.2/r-3.0.2/rg-1.5.0/sb-1.7.1/sp-2.3.1/cr-2.0.3/datatables.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
-    <script src="https://cdn.datatables.net/v/bs5/jq-3.7.0/jszip-3.10.1/dt-2.0.7/b-3.0.2/b-html5-3.0.2/r-3.0.2/rg-1.5.0/sb-1.7.1/sp-2.3.1/datatables.min.js"></script>
+    <script src="https://cdn.datatables.net/v/bs5/jq-3.7.0/jszip-3.10.1/dt-2.0.7/b-3.0.2/b-html5-3.0.2/r-3.0.2/rg-1.5.0/sb-1.7.1/sp-2.3.1/cr-2.0.3/datatables.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.2/css/bulma.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/v/bm/jq-3.7.0/jszip-3.10.1/dt-2.0.7/b-3.0.2/b-html5-3.0.2/r-3.0.2/rg-1.5.0/datatables.min.css" rel="stylesheet">
+    <script src="https://cdn.datatables.net/v/bm/jq-3.7.0/jszip-3.10.1/dt-2.0.7/b-3.0.2/b-html5-3.0.2/r-3.0.2/rg-1.5.0/datatables.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/handlebars@latest/dist/handlebars.js"></script>
 </head>
-<body>   
+<body>
+    <style>
+        #myTable td{
+            vertical-align: middle; 
+        }
+        #myTable thead > tr:first-child{
+            text-align: center; 
+        }
+    </style>
       
-    <table id="myTable" class="display responsive dtr-inline collapsed" style="width:70vw">
+    <table id="myTable" class="table is-bordered display responsive dtr-inline collapsed" style="width:70vw">
         <thead>
             <tr>
-                <th class="bigdesktop meddesktop smalldesktop medium">Modalidade</th>
-                <th class="bigdesktop meddesktop smalldesktop medium">Objeto</th>
-                <th class="bigdesktop meddesktop smalldesktop medium">Contrato</th>
-                <th class="bigdesktop meddesktop smalldesktop medium">Secretaria</th>
+                <th class=""></th>
+                <th class="bigdesktop meddesktop smalldesktop medium">Nome</th>
+                <th class="bigdesktop meddesktop smalldesktop medium">Licitação</th>
+                <th class="bigdesktop meddesktop smalldesktop medium">Início</th>
+                <th class="bigdesktop meddesktop smalldesktop medium">Fim</th>
+                <th class="bigdesktop meddesktop smalldesktop medium">Valor previsto</th>
                 <th class="bigdesktop meddesktop smalldesktop medium">Situação</th>
-                <th class="bigdesktop meddesktop smalldesktop medium">Contratada</th>
-                <th class="bigdesktop meddesktop smalldesktop medium">Ordem de Serviço</th>
-                <th class="bigdesktop meddesktop smalldesktop medium">Valor</th>
-                <th class="hideous">Mais informações:</th>
+                <th class="nofilter bigdesktop meddesktop smalldesktop medium">Orçamento</th>
+                <th class="nofilter bigdesktop meddesktop smalldesktop medium">Detalhes</th>
+                <th class="nofilter hideous">Valor contratado</th>
+                <th class="nofilter hideous">Prazo em dias</th>  
+                <th class="nofilter hideous">Valor Liquidado</th>
+                <th class="nofilter hideous">Pagamento</th>
+                <th class="nofilter hideous">Percentual Liquidado</th>
+                <th class="nofilter hideous">Medições:</th> 
             </tr>
         </thead>
         <tbody>
@@ -43,33 +61,39 @@
             return `<tr>${renderer(data)}</tr>`;
         }
 
-        function gerarT(data){            
-            return data.map((item) => {                
-                item = (typeof item == "string" && item.startsWith("R$")) ? formatCurrency(item): item
-                return `<td style="text-align:right">${item}</td>`;
-            }).join("");
+        function gerarLinhas(data){
+            let linhas = ``;
+            for (const periodo in data){
+                let a = Object.entries(data[periodo]).map(([item,valor]) => {
+                    let extra = "";
+                    switch (item){
+                        case "Percentual Liquidado":
+                            // extra = 100 - parseFloat(valor.replace(",","."));  
+                            valor = valor.toString() + "%";
+                            // extra = `<td style="text-align:right">${extra}%</td>`
+                            break
+                        default:
+                            valor = "R$" + valor.toString(); 
+                            break
+                    }
+                    return `<td style="text-align:right">${valor}</td>${extra}`
+                }).join(""); 
+            linhas += `<tr><td style="text-align:center">${periodo}</td>${a}</tr>`;
+            } 
+            return linhas;
         }
 
-        function gerarOutraTabela(percentual){
-            let a = percentual[8].map((data) => Object.keys(data).map((medicao)=>{
-                let values = data[medicao];
-                return `<tr><td style="text-align:center">${medicao}</td>${gerarT(values)}</tr>`;
-            })).join("");
+        function gerarOutraTabela(data){
+            let a = gerarLinhas(data); 
+            // let a = "";
             
             let template = `<table class="table table-striped">
-                <tr>
-                    <th></th>
-                    <th colspan="3" style="border-right:2px solid #ccc;border-left:2px solid #ccc">PERCENTUAL CONTRATUAL</th>
-                    <th colspan="3" style="border-left:2px solid #ccc">CONTROLE DE MEDIÇÕES</th>
-                </tr>                
                 <tbody>
                     <tr>
                         <th>Período</th> 
-                        <th>Medição</th>
-                        <th>A medir</th>
-                        <th>Total</th>
-                        <th>Valor</th>
-                        <th>Saldo</th>
+                        <th>Liquidado</th>
+                        <th>Pagamento</th>
+                        <th>Percentual liquidado</th>
                     </tr>
                     ${a} 
                 </tbody> 
@@ -77,71 +101,89 @@
             return template;
         }
 
-        function formatCurrency(amount, currency="R$") {
-            if (typeof amount == "string" && amount.startsWith(currency)){
-                amount = amount.substr(currency.length);
-            }
-            amount = parseFloat(amount.toString());
-            return currency + amount.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');            
-        }
+
 
         let table = new DataTable('#myTable', {
             initComplete: function () {
                 let tr = document.createElement("tr");
-
-                this.api().columns().every(function () {
+                this.api().columns().every(function () {      
                     let column = this;
-                    let title = column.header().textContent;
-
+                    let header = column.header();
+                    let title = header.textContent;
+                    let classes = header.className;
                     let td = document.createElement("td");
 
-                    if (title == "Situação" || title == "Secretaria"){
-                        // Create select element
-                        let wrapper = document.createElement('div')
-                        let select = document.createElement('select');
-                        wrapper.appendChild(select)
-                        wrapper.className = "select"
-                        select.add(new Option(''));
-                        td.appendChild(wrapper);
-        
-                        // Apply listener for user change in value
-                        select.addEventListener('change', function () {
-                            column.search(select.value, {exact: true}).draw();
-                        });
-        
-                        // Add list of options
-                        column.data().unique().sort().each(function (d, j) {
-                            select.add(new Option(d));
-                        });             
+                    if (classes.includes("nofilter")){
+                        return;
                     }
-                    else if (title == "Mais informações:"){
 
+                    switch (title){
+                        case "Situação":
+                            let wrapper = document.createElement('div')
+                                let select = document.createElement('select');
+                                wrapper.appendChild(select)
+                                wrapper.className = "select"
+                                select.add(new Option(''));
+                                td.appendChild(wrapper);
+                                
+                                // Apply listener for user change in value
+                                select.addEventListener('change', function () {
+                                    column.search(select.value, {exact: true}).draw();
+                                });
+                                
+                                // Add list of options
+                                column.data().unique().sort().each(function (d, j) {
+                                    select.add(new Option(d));
+                                });
+                            break
+                        default:
+                            if (classes.includes("dtr-control")){
+                                tr.append(td);
+                                return;
+                            }                            
+                            // Create input element
+                            let input = document.createElement('input');
+                            input.className = "input is-small"
+                            input.placeholder = title;
+                            td.appendChild(input);
+                            // Event listener for user input
+                            input.addEventListener('keyup', () => {
+                                if (column.search() !== this.value) {
+                                    column.search(input.value).draw();
+                                }
+                            });
+                            break;
                     }
-                    else{
-                        // Create input element
-                        let input = document.createElement('input');
-                        input.className = "input"
-                        input.placeholder = title;
-                        td.appendChild(input);
-                        // Event listener for user input
-                        input.addEventListener('keyup', () => {
-                            if (column.search() !== this.value) {
-                                column.search(input.value).draw();
-                            }
-                        });
-                    }
-                    
-                    tr.append(td);
-    
-                });
-                this.api().table().header().appendChild(tr);
-
-                
-            },            
+                    tr.append(td);                        
+                    });
+                    this.api().table().header().appendChild(tr);
+                },            
             ajax: {
-                url: 'https://gist.githubusercontent.com/Larvin-Vinicius/d904725a65f3fc8dba3bd42ed359cfb1/raw/2ed30f7eb70e028a8718237553cd8aa123a54317',
+                url: 'obronas.json',
                 dataSrc: 'data'
             },
+            columns: [
+                {
+                    className: 'control dtr-control',
+                    orderable: false,
+                    data: null,
+                    render: () => ''  
+                },     
+                {data: 'Nome'},
+                {data: 'Número da licitação'},
+                {data: 'Início'},
+                {data: 'Fim'},
+                {data: 'Valor previsto',render: $.fn.dataTable.render.number( ',', ',', 2, 'R$')},
+                {data: 'Situação'}, 
+                {data: 'Orçamento URL',render: (data, type, row) => `<a href="${data}" title="Orçamento da obra">Orçamento</a>`},
+                {data: 'Detalhes',render: (data, type, row)=> `<a href="${data}" title="Detalhes da obra">Detalhes</a>`}, 
+                {data: 'Valor contratado',render: $.fn.dataTable.render.number( ',', ',', 2, 'R$')}, 
+                {data: 'Prazo em dias'},
+                {data: 'Liquidado',render: $.fn.dataTable.render.number( ',', ',', 2, 'R$')},
+                {data: 'Pagamento',render: $.fn.dataTable.render.number( ',', ',', 2, 'R$')},
+                {data: 'Percentual Liquidado', render: (data, type, row) => data.toString() + "%"},  
+                {data: 'Medições', render: (data, type, row) => gerarOutraTabela(data)},
+            ],             
             dom: 'Bfrtip',
             lengthMenu: [
                 [10, 25, 50, -1],
@@ -159,7 +201,7 @@
             responsive: {
                 details: {
                     type: "column",
-                    target: 'td.control.dtr-control'
+                    target: 'td.control.dtr-control',
                 },
                 breakpoints: [
                     {name: 'bigdesktop', width: Infinity},
@@ -173,48 +215,15 @@
                     {name: 'mobilep', width: 320},
                     {name: 'hideous', width: 2}
                 ]
-            },                        
+            },
             columnDefs: [
-            {},
-            {
-                width: '60%',
-                targets: [7,6]
-            },                
-            {
-                width: '50%',
-                targets: [1]
-            },   
-            {
-                width: '30%',
-                targets: [0]
-            },
-            {
-                width: '10%',
-                targets: [3,4]
-            },            
-            {    
-                render: (data, type, row) => {
-                    return gerarOutraTabela(row);
-                },
-                targets: 8 
-            },
-            {
-                targets: 7,
-                render: (data, type, row) => {
-                    if (type === 'display' || type === 'filter') {
-                        return formatCurrency(data);
-                    }
-                    return data;
+                {
+                    targets: 1,
+                    width: "80%"
                 }
-            },            
-            {
-                className: 'control dtr-control',
-                orderable: true,
-                targets:   0
-            }                       
             ],
             language: {
-                url: 'https://cdn.datatables.net/plug-ins/1.11.5/i18n/pt-BR.json'
+                url: 'https://cdn.datatables.net/plug-ins/1.11.5/i18n/pt-BR.json' 
             }                            
         });
     
