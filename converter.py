@@ -1,22 +1,14 @@
 import json
 
+obras = {
+    "draw": None,
+    "recordsTotal": None,
+    "recordsFiltered": None,
+}
 
-obras = []
-with open("obrinhas.json", "r") as f:
+with open("obrinhas.json", "r", encoding="utf-8") as f:
     obrinhas = json.loads(f.read())
-
-    for obra, dados in obrinhas.items():
-        obras.append([
-            obra, 
-            dados["Objeto"], 
-            dados["Contrato"], 
-            dados["Secretaria"], 
-            dados["Situação"], 
-            dados["Contratada"], 
-            dados["Ordem de Serviço"], 
-            dados["Valor do Contrato"],
-            dados["Medições"]
-        ])
+    obras["data"] = obrinhas
 
 with open("obronas.json", "w+", encoding="utf-8") as f:
-    f.write(json.dumps(obras))
+    f.write(json.dumps(obras, ensure_ascii=False))
